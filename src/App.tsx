@@ -1,87 +1,124 @@
 import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCoins, faHandPointer } from '@fortawesome/free-solid-svg-icons';
-import CountUp from 'react-countup';
+import useTelegram from './hooks/useTelegram';
+import './styles/App.css';
+import clickerImage from './assets/images/clicker-image.png';
+
 
 const App: React.FC = () => {
-  const [coins, setCoins] = useState(0);
-  const [coinsPerSecond, setCoinsPerSecond] = useState(0);
+  const { user, closeWebApp, sendData } = useTelegram();
+  const [count, setCount] = useState(0);
   const [clickPower, setClickPower] = useState(1);
+  const [upgrades, setUpgrades] = useState([
+    { name: 'Улучшение 1', cost: 10, power: 1, purchased: false },
+    { name: 'Улучшение 2', cost: 50, power: 5, purchased: false },
+  ]);
 
-  const webApp = window.Telegram.WebApp;
-
+  // Сохранение прогресса в localStorage (можно оставить для работы в браузере)
   useEffect(() => {
-    // Инициализация Telegram WebApp
-    webApp.ready();
+    localStorage.setItem('count', String(count));
+    localStorage.setItem('clickPower', String(clickPower));
+    localStorage.setItem('upgrades', JSON.stringify(upgrades));
+  }, [count, clickPower, upgrades]);
 
-    // Настройка главной кнопки (необязательно)
-    webApp.MainButton.setText('Поделиться счётом');
-    webApp.MainButton.onClick(() => {
-      webApp.sendData(String(coins));
-    });
-
-    // Восстановление прогресса из localStorage (необязательно)
-    const savedCoins = localStorage.getItem('coins');
-    if (savedCoins) {
-      setCoins(parseInt(savedCoins, 10));
+  // Восстановление прогресса из localStorage
+  useEffect(() => {
+    const savedCount = localStorage.getItem('count');
+    if (savedCount) {
+      setCount(parseInt(savedCount, 10));
+    }
+    const savedClickPower = localStorage.getItem('clickPower');
+    if (savedClickPower) {
+      setClickPower(parseInt(savedClickPower, 10));
+    }
+    const savedUpgrades = localStorage.getItem('upgrades');
+    if (savedUpgrades) {
+      setUpgrades(JSON.parse(savedUpgrades));
     }
   }, []);
 
-  useEffect(() => {
-    // Сохранение прогресса в localStorage (необязательно)
-    localStorage.setItem('coins', String(coins));
-  }, [coins]);
-
+  // Обработчик кликов
   const handleClick = () => {
-    setCoins(coins + clickPower);
+    setCount(count + clickPower);
   };
 
-  // Обработка покупок улучшений (пример)
-  const handleUpgradePurchase = (cost: number, power: number) => {
-    if (coins >= cost) {
-      setCoins(coins - cost);
-      setClickPower(clickPower + power);
+  // Обработчик покупки улучшений
+  const handleUpgradePurchase = (index: number) => {
+    const upgrade = upgrades[index];
+    if (count >= upgrade.cost && !upgrade.purchased) {
+      setCount(count - upgrade.cost);
+      setClickPower(clickPower + upgrade.power);
+      setUpgrades(
+        upgrades.map((u, i) =>
+          i === index ? { ...u, purchased: true } : u
+        )
+      );
     }
   };
 
+  // Отправка данных в Telegram
+  const handleSendData = () => {
+    sendData({
+      count,
+      clickPower,
+      upgrades,
+    });
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="text-center text-4xl font-bold mb-8">
-        <CountUp end={coins} duration={0.5} />
-        <FontAwesomeIcon icon={faCoins} className="ml-2 text-yellow-500" />
-      </div>
+    <div className="container">
+      {/* Блок информации о пользователе */}
+      {user && (
+        <div className="user-info">
+          <p>Привет, {user.first_name}!</p>
+          {user.photo_url && (
+            <img
+              src={user.photo_url}
+              alt="User Avatar"
+              className="user-avatar"
+            />
+          )}
+        </div>
+      )}
 
       {/* Кликер */}
-      <div className="flex justify-center">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full text-2xl"
+      <div className="clicker">
+        <img
+          src={clickerImage}
+          alt="Clicker"
           onClick={handleClick}
-        >
-          <FontAwesomeIcon icon={faHandPointer} className="mr-2" />
-          Click!
-        </button>
+          style={{ cursor: 'pointer' }}
+        />
       </div>
 
-      {/* Улучшения (пример) */}
-      <div className="mt-8">
-        <button
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-4"
-          onClick={() => handleUpgradePurchase(10, 1)}
-        >
-          Улучшение 1 (10 монет)
-        </button>
-        <button
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => handleUpgradePurchase(50, 5)}
-        >
-          Улучшение 2 (50 монет)
-        </button>
+      {/* Счетчик */}
+      <div className="counter">Монеты: {count}</div>
+
+      {/* Улучшения */}
+      <div className="upgrades">
+        <h2>Улучшения:</h2>
+        <ul>
+          {upgrades.map((upgrade, index) => (
+            <li key={index}>
+              <button
+                disabled={count < upgrade.cost || upgrade.purchased}
+                onClick={() => handleUpgradePurchase(index)}
+              >
+                {upgrade.name} ({upgrade.cost} монет)
+              </button>
+              {upgrade.purchased && <span> - Куплено</span>}
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Статистика (пример) */}
-      <div className="mt-8">
-        <p>Монеты в секунду: {coinsPerSecond}</p>
-        <p>Сила клика: {clickPower}</p>
+      {/* Кнопки взаимодействия с Telegram */}
+      <div className="telegram-buttons">
+        <button onClick={handleSendData} className="send-data-button">
+          Отправить данные боту
+        </button>
+        <button onClick={closeWebApp} className="close-button">
+          Закрыть
+        </button>
       </div>
     </div>
   );
