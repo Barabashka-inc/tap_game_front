@@ -9,13 +9,15 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    host: true, 
-    port: 4173, 
+    host: true,
+    port: 4173,
+  },
+  build: {
+    outDir: 'dist',
   },
   preview: {
-    allowedHosts: ['tapgamefront-frontend.up.railway.app'], 
     host: true,
-    port: 4173, 
-}
+    port: 4173,
+  },
 })
 
