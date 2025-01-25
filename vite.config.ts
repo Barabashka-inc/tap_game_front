@@ -8,4 +8,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: true, 
+    port: 4173, 
+  },
+  preview: {
+    allowedHosts: ['tapgamefront-frontend.up.railway.app'], 
+    host: true,
+    port: 4173, 
 })
