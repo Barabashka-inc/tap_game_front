@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "GeistMono";
+  src: url(./assets/GeistMono-Regular.otf);
+}
+
+body{
+  height: 100vh;
+  overflow: hidden;
+  background: var(--tg-theme-bg);
+}
+
+.geist-mono {
+  font-family: "GeistMono", monospace; 
+}
