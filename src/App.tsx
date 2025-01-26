@@ -43,21 +43,24 @@ const App: React.FC = () => {
   const handleClick = () => {
     setCount(count + clickPower);
   };
-  const [isTelegramAvailable, setIsTelegramAvailable] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!window.Telegram) {
-      setIsTelegramAvailable(false);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('tgWebApp')) {
+      console.error('Параметр tgWebApp отсутствует. Проверьте настройки бота.');
     }
   }, []);
+  
 
-  if (!isTelegramAvailable) {
-    return (
-      <div className="error">
-        <p>Ошибка: Telegram API недоступен. Откройте приложение через Telegram.</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (window.Telegram) {
+      console.log('initData:', window.Telegram.WebApp.initData);
+    } else {
+      console.error('Telegram API не найден.');
+    }
+  }, []);
+  
+
 
 
   // Обработчик покупки улучшений с подтверждением
