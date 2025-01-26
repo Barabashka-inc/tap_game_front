@@ -46,10 +46,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    console.log('Параметры строки запроса:', Object.fromEntries(urlParams.entries()));
+  
     if (!urlParams.has('tgWebApp')) {
       console.error('Параметр tgWebApp отсутствует. Проверьте настройки бота.');
     }
   }, []);
+  
   
 
   useEffect(() => {
