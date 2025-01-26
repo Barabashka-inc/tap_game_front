@@ -43,6 +43,22 @@ const App: React.FC = () => {
   const handleClick = () => {
     setCount(count + clickPower);
   };
+  const [isTelegramAvailable, setIsTelegramAvailable] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!window.Telegram) {
+      setIsTelegramAvailable(false);
+    }
+  }, []);
+
+  if (!isTelegramAvailable) {
+    return (
+      <div className="error">
+        <p>Ошибка: Telegram API недоступен. Откройте приложение через Telegram.</p>
+      </div>
+    );
+  }
+
 
   // Обработчик покупки улучшений с подтверждением
   const handleUpgradePurchase = async (index: number) => {
