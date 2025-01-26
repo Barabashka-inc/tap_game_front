@@ -3,9 +3,16 @@ import useTelegram from './hooks/useTelegram';
 import './styles/App.css';
 import clickerImage from './assets/images/clicker-image.png';
 
-
 const App: React.FC = () => {
-  const { user, closeWebApp, sendData } = useTelegram();
+  const {
+    user,
+    closeWebApp,
+    sendData,
+    showAlert,
+    showConfirm,
+    expandWebApp,
+  } = useTelegram();
+
   const [count, setCount] = useState(0);
   const [clickPower, setClickPower] = useState(1);
   const [upgrades, setUpgrades] = useState([
@@ -13,7 +20,7 @@ const App: React.FC = () => {
     { name: 'Улучшение 2', cost: 50, power: 5, purchased: false },
   ]);
 
-  // Сохранение прогресса в localStorage (можно оставить для работы в браузере)
+  // Сохранение прогресса в localStorage
   useEffect(() => {
     localStorage.setItem('count', String(count));
     localStorage.setItem('clickPower', String(clickPower));
@@ -23,17 +30,13 @@ const App: React.FC = () => {
   // Восстановление прогресса из localStorage
   useEffect(() => {
     const savedCount = localStorage.getItem('count');
-    if (savedCount) {
-      setCount(parseInt(savedCount, 10));
-    }
+    if (savedCount) setCount(parseInt(savedCount, 10));
+
     const savedClickPower = localStorage.getItem('clickPower');
-    if (savedClickPower) {
-      setClickPower(parseInt(savedClickPower, 10));
-    }
+    if (savedClickPower) setClickPower(parseInt(savedClickPower, 10));
+
     const savedUpgrades = localStorage.getItem('upgrades');
-    if (savedUpgrades) {
-      setUpgrades(JSON.parse(savedUpgrades));
-    }
+    if (savedUpgrades) setUpgrades(JSON.parse(savedUpgrades));
   }, []);
 
   // Обработчик кликов
@@ -41,10 +44,18 @@ const App: React.FC = () => {
     setCount(count + clickPower);
   };
 
-  // Обработчик покупки улучшений
-  const handleUpgradePurchase = (index: number) => {
+  // Обработчик покупки улучшений с подтверждением
+  const handleUpgradePurchase = async (index: number) => {
     const upgrade = upgrades[index];
-    if (count >= upgrade.cost && !upgrade.purchased) {
+    if (count < upgrade.cost || upgrade.purchased) {
+      showAlert('Недостаточно монет или улучшение уже куплено!');
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      `Купить ${upgrade.name} за ${upgrade.cost} монет?`
+    );
+    if (confirmed) {
       setCount(count - upgrade.cost);
       setClickPower(clickPower + upgrade.power);
       setUpgrades(
@@ -52,16 +63,20 @@ const App: React.FC = () => {
           i === index ? { ...u, purchased: true } : u
         )
       );
+      showAlert('Улучшение куплено!');
     }
   };
 
   // Отправка данных в Telegram
   const handleSendData = () => {
-    sendData({
-      count,
-      clickPower,
-      upgrades,
-    });
+    sendData({ count, clickPower, upgrades });
+    showAlert('Данные отправлены боту!');
+  };
+
+  // Расширение приложения
+  const handleExpandApp = () => {
+    expandWebApp();
+    showAlert('Приложение расширено!');
   };
 
   return (
@@ -117,7 +132,10 @@ const App: React.FC = () => {
           Отправить данные боту
         </button>
         <button onClick={closeWebApp} className="close-button">
-          Закрыть
+          Закрыть приложение
+        </button>
+        <button onClick={handleExpandApp} className="expand-button">
+          Расширить приложение
         </button>
       </div>
     </div>
